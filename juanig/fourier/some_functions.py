@@ -12,6 +12,7 @@ Created on Wed Aug 16 15:09:17 2017
 """
 
 import numpy as np
+from scipy import misc, fftpack
 
 
 
@@ -307,6 +308,13 @@ def sqrt_filter(img):
     return img    
         
       
-
+def modulo_fase ( dft_array ):
+        #modulo y fase
+        width, height = dft_array.shape
+        mag_array = np.zeros([width,height])
+        ang_array = mag_array.copy()
+        mag_array[:,:] = abs(dft_array[:,:])
+        ang_array[:,:] = np.angle(dft_array[:,:])
+        return mag_array, ang_array
 
        
