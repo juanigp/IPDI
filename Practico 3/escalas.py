@@ -21,7 +21,7 @@ def RGB2YIQ(rgb):
     rgb = np.reshape(rgb/255,(width*height,depth))
     yiq = np.zeros(rgb.shape)
 #    for i in range(width*height):
-    yiq[:,0] = 0.229*rgb[:,0] + 0.587*rgb[:,1] + 0.114*rgb[:,2]
+    yiq[:,0] = 0.299*rgb[:,0] + 0.587*rgb[:,1] + 0.114*rgb[:,2]
     yiq[:,1] = 0.595716*rgb[:,0] - 0.274453*rgb[:,1] - 0.321263*rgb[:,2]
     yiq[:,2] = 0.211456*rgb[:,0] - 0.522591*rgb[:,1] + 0.311135*rgb[:,2]
     if depth == 4:

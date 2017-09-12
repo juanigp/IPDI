@@ -10,10 +10,16 @@ import numpy as np
 from scipy import misc,fftpack
 import matplotlib.pyplot as plt
 
-def EscalaGrises(yiq):
+def EscalaGrises(rgb):
+    
+    yiq = RGB2YIQ(rgb)
+    
     yiq[:,:,1] = 0
     yiq[:,:,2] = 0
-    return yiq    
+    
+    rgbOut = YIQ2RGB(yiq)
+    
+    return rgbOut   
     
 def FourierTrans(image):
     
@@ -102,7 +108,7 @@ def InvFourierTrans(trans):
             trans[(i+width//2)%width, (j+height//2)%height, 0] = trans[i, j, 0]
             trans[i,j,0] = aux
             
-    trans[:,:,0] = np.power(10,trans[:,:,0])    #Problema con el "+1" usado en la función con FFT
+    trans[:,:,0] = np.power(10,trans[:,:,0]) - 1
     comp = np.zeros((width,height))
     comp = np.complex_(comp)
     comp[:,:] = trans[:,:,0]*np.exp(1j*trans[:,:,1])
@@ -115,10 +121,12 @@ def InvFourierTrans(trans):
     
     return image
 
-hola = misc.imread('circ.png')
+hola = misc.imread('cat512.png')
 
 plt.figure(0)
 plt.imshow(hola)
+
+goodby = EscalaGrises(hola)
 
 hola = FourierTrans(hola)
 
@@ -131,4 +139,7 @@ hello = InvFourierTrans(hola)
 
 plt.figure(2)
 plt.imshow(hello)
+
+plt.figure(3)
+plt.imshow(goodby)
 
