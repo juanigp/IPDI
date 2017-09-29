@@ -93,7 +93,16 @@ def Fourier2RGB(trans):
     
     rgb = rgb.astype(np.uint8)
 
-    return rgb
+    return rgb,minVal,maxVal
+
+def RGB2Fourier(rgb,minVal,maxVal):
+    
+    width,height,deph = rgb.shape
+    transMod = np.zeros((width,height))
+    
+    transMod[:,:] = rgb[:,:,0]*(maxVal - minVal)/255 + minVal
+    
+    return transMod
 
 def InvFourierTrans(trans):
     
@@ -113,7 +122,7 @@ def InvFourierTrans(trans):
     comp = np.complex_(comp)
     comp[:,:] = trans[:,:,0]*np.exp(1j*trans[:,:,1])
     
-    yiq[:,:,0] = np.real(fftpack.ifft2(comp))
+    yiq[:,:,0] = np.abs(fftpack.ifft2(comp))
     yiq[:,:,3] = 1
 
     
@@ -121,25 +130,32 @@ def InvFourierTrans(trans):
     
     return image
 
-hola = misc.imread('cat512.png')
+pic1 = misc.imread('lena512.png')
 
 plt.figure(0)
-plt.imshow(hola)
+plt.imshow(pic1)
 
-goodby = EscalaGrises(hola)
+grayPic = EscalaGrises(pic1)
 
-hola = FourierTrans(hola)
+tran = FourierTrans(pic1)
 
-chau = Fourier2RGB(hola)
+tranPic,Min,Max = Fourier2RGB(tran)
 
 plt.figure(1)
-plt.imshow(chau)
+plt.imshow(tranPic)
 
-hello = InvFourierTrans(hola)
+tran2 = np.zeros(tran.shape)
+tran2[:,:,0] = RGB2Fourier(tranPic,Min,Max)
+tran2[:,:,1] = tran[:,:,1]
+
+pic2 = InvFourierTrans(tran)
 
 plt.figure(2)
-plt.imshow(hello)
+plt.imshow(pic2)
 
 plt.figure(3)
-plt.imshow(goodby)
+plt.imshow(grayPic)
 
+pic3 = InvFourierTrans(tran2)
+plt.figure(4)
+plt.imshow(pic3)
