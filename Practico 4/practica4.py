@@ -7,10 +7,10 @@ Created on Fri Sep 15 17:41:13 2017
 
 from escalas import RGB2YIQ, YIQ2RGB
 from scipy import misc
-from fourier import EscalaGrises
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
+from scipy.stats import norm
 
 def histogram(rgb, bins=256):
     
@@ -20,7 +20,7 @@ def histogram(rgb, bins=256):
 #    gray = EscalaGrises(rgb)
 #    gray = np.reshape(gray[:,:,0],(width*height,1))
 #    
-    cumHistogram = np.zeros(256)
+    cumHistogram = np.zeros(bins)
 #    
 #    for i in range(width*height):
 #        aux = gray[i,0]
@@ -32,7 +32,7 @@ def histogram(rgb, bins=256):
     
     cumHistogram[0] = histogram[0]
     
-    for i in range(255):
+    for i in range(bins - 1):
         cumHistogram[i + 1] = cumHistogram[i] + histogram[i + 1]
         
 #    cumHistogram[:] = cumHistogram[:]/cumHistogram[255]
@@ -98,8 +98,9 @@ def brightenCM(rgb,cumHisto):
 #            yiq[i,0] = (yiq[i,0] - left)*(rightOut - leftOut)/(right - left) + leftOut
 
     for i in range(width*height):
-        yiq[i,0] = cumHisto[np.uint8(yiq[i,0]*255)]
-   
+       yiq[i,0] = cumHisto[np.uint(yiq[i,0]*(cumHisto.size - 1))]
+#       yiq[i,0] = yiq[i,0]*cumHisto[np.uint8(yiq[i,0]*255)]
+
     yiq = np.reshape(yiq,(width,height,depth))
     
     rgbOut = YIQ2RGB(yiq)
@@ -110,47 +111,93 @@ def gaussHisto(histogram,mean,sigma):
     gauss = np.zeros(histo.__len__())
     
     for i in range(histo.__len__()):
-        gauss[i] = mlab.normpdf(i/255,mean,sigma)
+        gauss[i] = mlab.normpdf(i/(histo.size - 1),mean,sigma)
     
-    gaussCum = np.zeros(256)
+    gaussCum = np.zeros(histo.size)
     
     gaussCum[0] = gauss[0]
     
-    for i in range(255):
+    for i in range(histo.size - 1):
         gaussCum[i + 1] = gaussCum[i] + gauss[i + 1]
         
     gauss = normHisto(gauss)
     gaussCum = normHisto(gaussCum)
     
     return (gauss,gaussCum)
-    
 
-hola = misc.imread('lena512.png')
+def normConst(rgb):
+    
+    rgbOut = np.zeros(rgb.shape)
+    
+    histo,cumH = histogram(rgb)
+    rgbOut = brightenCM(rgb,normHisto(cumH))
+    
+    return rgbOut
+
+def normGauss(rgb,mu,sigma):
+    
+    rgbOut = np.zeros(rgb.shape)
+    yiq = np.zeros(rgb.shape)
+    
+    rgbOut = normConst(rgb)
+    
+    yiq = RGB2YIQ(rgbOut)
+    
+    yiq[:,:,0] = norm.ppf(yiq[:,:,0],mu,sigma)
+    yiq[:,:,0] = np.clip(yiq[:,:,0],0,1)
+    
+    rgbOut = YIQ2RGB(yiq)
+    
+    return rgbOut
+    
+    
+image = misc.imread('lena512.png')
 
 plt.figure(0)
-plt.imshow(hola)
+plt.imshow(image)
 
-plt.figure(1)
-plt.imshow(EscalaGrises(hola))
-
-histo,cumHisto = histogram(hola)
+histo,cumHisto = histogram(image)
 
 histo = normHisto(histo)
 
-gauss,gaussCum = gaussHisto(histo,80/255,0.4)
+#gauss,gaussCum = gaussHisto(histo,127/255,0.2)
 
-plt.figure(2)
+plt.figure(1)
 plt.plot(histo)
-plt.plot(gauss)
 
 cumHisto = normHisto(cumHisto)
 
-plt.figure(3)
 plt.plot(cumHisto)
-plt.plot(gaussCum)
+
+plt.figure(2)
+image2 = brightenLAT(image,0.2,0.85)
+plt.imshow(image2)
+plt.figure(3)
+hist2,cumHist2 = histogram(image2)
+plt.plot(normHisto(hist2))
+plt.plot(normHisto(cumHist2))
 
 plt.figure(4)
-plt.imshow(brightenLAT(hola,0.2,0.85))
-
+image3 = normConst(image)
+plt.imshow(image3)
 plt.figure(5)
-plt.imshow(brightenCM(hola,gaussCum))
+hist3,cumHist3 = histogram(image3)
+plt.plot(normHisto(hist3))
+plt.plot(normHisto(cumHist3))
+
+plt.figure(6)
+image4 = normGauss(image,127/255,0.2)
+plt.imshow(image4)
+plt.figure(7)
+hist4,cumHist4 = histogram(image4)
+plt.plot(normHisto(hist4))
+plt.plot(normHisto(cumHist4))
+
+#plt.figure(4)
+#plt.imshow(brightenCM(image,gaussCum))
+#
+#plt.figure(4)
+#cualquiera = brightenCM(image,cumHisto)
+#histoCualqui,cumCualqui = histogram(cualquiera)
+#plt.plot(normHisto(histoCualqui))
+#plt.plot(normHisto(cumCualqui))
